@@ -137,111 +137,92 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/t.min.js"></script>
-    <script>
-      $(window).on("load", function () {
-        $("#loader").fadeOut(100, function () {
-          $("#preloader").fadeOut(200);
-          $("body").removeClass("loading");
-        });
-      });
-      $(document).ready(function ($) {
-        // Animation Text
-        $("#hello-text").t({
-          pause_on_tab_switch: false,
-          blink: false,
-          blink_perm: true,
-          speed: 20,
-          speed_vary: false,
-          fin: function () {
-            $(".t-caret").fadeOut();
-          },
-        });
+   <script>
+  $(window).on("load", function () {
+    $("#loader").fadeOut(100, function () {
+      $("#preloader").fadeOut(200);
+      $("body").removeClass("loading");
+    });
+  });
 
-        var i = 0;
+  $(document).ready(function ($) {
+    // Animation Text
+    $("#hello-text").t({
+      pause_on_tab_switch: false,
+      blink: false,
+      blink_perm: true,
+      speed: 20,
+      speed_vary: false,
+      fin: function () {
+        $(".t-caret").fadeOut();
+      },
+    });
 
-        // For Input Enter key
-        $("#data").keyup(function (event) {
-          if (event.keyCode === 13) {
-            $value = $("#data").val();
-            $msg =
-              '<div class="user-inbox inbox"><div class="wrap"><div class="icon"><img src="assets/img/x2.png" alt="" /></div><div class="msg-header"><p>' +
-              $value +
-              "</p></div></div></div>";
-            $(".form").append($msg);
-            $("#data").val("");
+    var i = 0;
 
-            $replay =
-              '<div class="bot-inbox inbox"><div class="wrap"><div class="icon"><img src="../assets/img/logo_100px.png" alt=""></div><div class="msg-header" id="chat-' +
-              i +
-              '"><p>&nbsp;</p></div></div>';
+    // Function to handle chat messages
+    function handleChat(value) {
+      // User message
+      var userMsg =
+        '<div class="user-inbox inbox"><div class="wrap"><div class="icon"><img src="assets/img/x2.png" alt="" /></div><div class="msg-header"><p>' +
+        value +
+        "</p></div></div></div>";
+      $(".form").append(userMsg);
+      $("#data").val(""); // Clear input field
 
-            $(".form").append($replay);
-            $(".form").scrollTop($(".form")[0].scrollHeight);
+      // Bot response placeholder
+      var botReply =
+        '<div class="bot-inbox inbox"><div class="wrap"><div class="icon"><img src="../assets/img/logo_100px.png" alt=""></div><div class="msg-header" id="chat-' +
+        i +
+        '"><p>&nbsp;</p></div></div>';
+      $(".form").append(botReply);
+      $(".form").scrollTop($(".form")[0].scrollHeight); // Scroll to bottom
 
-            $("#chat-" + i + " p").t();
+      // Call GPT-2 API
+      $.ajax({
+        url: "https://your-api-url.com/generate/", // Your hosted GPT-2 API endpoint
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ prompt: value, max_length: 50 }),
+        success: function (result) {
+          $("#chat-" + i).html("<p>" + result.generated_text + "</p>");
 
-            console.log($value);
-            $.ajax({
-              url: "https://office.prolocalize.com/xai/gpt/message.php",
-              type: "POST",
-              data: "text=" + $value,
-              success: function (result) {
-                $("#chat-" + i).html("<p>" + result + "</p>");
-
-                $("#chat-" + i + " p").t({
-                  pause_on_tab_switch: false,
-                  blink: false,
-                  speed: 20,
-                  blink_perm: true,
-                  speed_vary: false,
-                  fin: function () {
-                    $(".t-caret").fadeOut();
-                  },
-                });
-
-                i++;
-              },
-            });
-          }
-        });
-
-        // For Button
-        $("#send-btn").on("click", function () {
-          // When the "Send" button is clicked...
-          $value = $("#data").val(); // Get the value of the input field
-          $msg =
-            '<div class="user-inbox inbox"><div class="wrap"><div class="icon"><img src="assets/img/x2.png" alt="" /></div><div class="msg-header"><p>' +
-            $value +
-            "</p></div></div></div>"; // Create a message container for the user's message
-          $(".form").append($msg); // Append the user's message to the chat container
-          $("#data").val(""); // Clear the input field
-
-          $.ajax({
-            // Send an AJAX request to the server
-            url: "https://office.prolocalize.com/xai/gpt/message.php", // The URL to send the request to
-            type: "POST", // The HTTP method to use
-            data: "text=" + $value, // The data to send in the request
-            success: function (result) {
-              // If the request is successful...
-              $replay =
-                '<div class="bot-inbox inbox"><div class="wrap"><div class="icon"><img src="assets/img/x2.png" alt=""></div><div class="msg-header" id="chat-' +
-                i +
-                '"><p>' +
-                result +
-                "</p></div></div>"; // Create a message container for the bot's response
-
-              $(".form").append($replay); // Append the bot's response to the chat container
-              $("#chat-" + i).t({ caret: false });
-              $(".form").scrollTop($(".form")[0].scrollHeight); // Scroll to the bottom of the chat container
-              i++;
+          $("#chat-" + i + " p").t({
+            pause_on_tab_switch: false,
+            blink: false,
+            speed: 20,
+            blink_perm: true,
+            speed_vary: false,
+            fin: function () {
+              $(".t-caret").fadeOut();
             },
           });
-        });
+
+          i++;
+        },
+        error: function () {
+          $("#chat-" + i).html("<p>Error fetching response from server.</p>");
+          i++;
+        },
       });
-    </script>
+    }
+
+    // For Input Enter key
+    $("#data").keyup(function (event) {
+      if (event.keyCode === 13) {
+        var value = $("#data").val();
+        handleChat(value); // Call the function to handle chat
+      }
+    });
+
+    // For Button
+    $("#send-btn").on("click", function () {
+      var value = $("#data").val(); // Get the value of the input field
+      handleChat(value); // Call the function to handle chat
+    });
+  });
+</script>
+
   </body>
 
 
